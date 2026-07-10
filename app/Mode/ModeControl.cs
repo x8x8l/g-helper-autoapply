@@ -55,10 +55,7 @@ namespace GHelper.Mode
             if (reapplyTime > 0)
             {
                 reapplyTimer = new System.Timers.Timer(reapplyTime * 1000);
-                Logger.WriteLine($"we do be elapsing");
                 reapplyTimer.Elapsed += ReapplyTimer_Elapsed;
-                Logger.WriteLine($"we do DO be elapsing");
-
             }
         }
 
@@ -78,7 +75,6 @@ namespace GHelper.Mode
         private static void SetReapplyEnabled(bool enabled)
         {
             if (reapplyTimer != null) reapplyTimer.Enabled = enabled;
-            Logger.WriteLine($"timer enabled");
         }
 
 
@@ -86,7 +82,6 @@ namespace GHelper.Mode
         {
             SetCPUTemp(AppConfig.GetMode("cpu_temp"));
             SetRyzenPower();
-            Logger.WriteLine("checkpoint 1");
         }
 
         public void WaitForApply()
@@ -390,13 +385,10 @@ namespace GHelper.Mode
                 if (ProcessHelper.IsUserAdministrator())
                 {
                     SetRyzenPower(true);
-                    Logger.WriteLine($"good outcome");
-
                 }
                 else if (launchAsAdmin)
                 {
                     ProcessHelper.RunAsAdmin("cpu");
-                    Logger.WriteLine($"bad outcome");
                     return;
                 }
             }
@@ -522,7 +514,6 @@ namespace GHelper.Mode
                 if (launchAsAdmin) ProcessHelper.RunAsAdmin("uv");
                 return string.Empty;
             }
-            Logger.WriteLine("ryzen set");
             var smu = GetSmu();
             if (smu == null) return string.Empty;
 
@@ -587,25 +578,18 @@ namespace GHelper.Mode
 
         public void ResetRyzen()
         {
-            Logger.WriteLine("ryzen reset");
             if (_cpuUV != 0) SetUV(0);
             if (_igpuUV != 0) SetUViGPU(0);
             if (_cpuTemp != CpuInfo.DefaultTemp) SetCPUTemp(CpuInfo.DefaultTemp, true);
             SetReapplyEnabled(false);
-            
         }
 
         public void AutoRyzen()
         {
-            if (!CpuInfo.IsAMD)
-                return;
-                Logger.WriteLine("vibe check failed");
+            if (!CpuInfo.IsAMD) return;
 
-            if (AppConfig.IsApplyUV()) 
-                SetRyzen();
-            else 
-                ResetRyzen();
-  
+            if (AppConfig.IsApplyUV()) SetRyzen();
+            else ResetRyzen();
         }
 
         public void AutoCPUTemp()
