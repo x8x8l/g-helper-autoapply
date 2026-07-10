@@ -81,7 +81,9 @@ namespace GHelper.Mode
         private void ReapplyTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
         {
             SetCPUTemp(AppConfig.GetMode("cpu_temp"));
-            SetRyzenPower();
+            if (Program.acpi.IsSupported(AsusACPI.PPT_APUA0)) SetPower();
+            
+            else if (CpuInfo.IsAMD) SetRyzenPower();
         }
 
         public void WaitForApply()
@@ -377,8 +379,6 @@ namespace GHelper.Mode
                 Program.acpi.DeviceSet(AsusACPI.PPT_APUA3, limit_total, "PowerLimit A3");
                 Program.acpi.DeviceSet(AsusACPI.PPT_APUA0, limit_slow, "PowerLimit A0");
                 customPower = limit_total;
-                Logger.WriteLine($"setting troleo");
-                SetRyzenPower(true);
             }
             else if (isAMD)
             {
@@ -508,12 +508,12 @@ namespace GHelper.Mode
 
         public string SetRyzen(bool launchAsAdmin = false)
         {
-            
             if (!ProcessHelper.IsUserAdministrator())
             {
                 if (launchAsAdmin) ProcessHelper.RunAsAdmin("uv");
                 return string.Empty;
             }
+
             var smu = GetSmu();
             if (smu == null) return string.Empty;
 
@@ -524,7 +524,6 @@ namespace GHelper.Mode
                 int igpuUV  = AppConfig.GetMode("igpu_uv",  0);
                 int cpuTemp = AppConfig.GetMode("cpu_temp");
                 
-
                 if (CpuInfo.IsSupportedUV() && cpuUV >= CpuInfo.MinCPUUV && cpuUV <= CpuInfo.MaxCPUUV)
                 {
                     SmuStatus s = smu.SetCoAll(cpuUV);
