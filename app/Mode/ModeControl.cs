@@ -55,7 +55,10 @@ namespace GHelper.Mode
             if (reapplyTime > 0)
             {
                 reapplyTimer = new System.Timers.Timer(reapplyTime * 1000);
+                Logger.WriteLine($"we do be elapsing");
                 reapplyTimer.Elapsed += ReapplyTimer_Elapsed;
+                Logger.WriteLine($"we do DO be elapsing");
+
             }
         }
 
@@ -75,6 +78,7 @@ namespace GHelper.Mode
         private static void SetReapplyEnabled(bool enabled)
         {
             if (reapplyTimer != null) reapplyTimer.Enabled = enabled;
+            Logger.WriteLine($"timer enabled");
         }
 
 
@@ -82,6 +86,7 @@ namespace GHelper.Mode
         {
             SetCPUTemp(AppConfig.GetMode("cpu_temp"));
             SetRyzenPower();
+            Logger.WriteLine("checkpoint 1");
         }
 
         public void WaitForApply()
@@ -343,7 +348,7 @@ namespace GHelper.Mode
 
             smu.SetAllLimits(limit_total, limit_fast, limit_slow,
                 out SmuStatus stapm, out SmuStatus fast, out SmuStatus slow);
-            if (init) Logger.WriteLine($"STAPM: {limit_total}W {stapm} | SLOW: {limit_slow}W {slow} | FAST: {limit_fast}W {fast}");
+            Logger.WriteLine($"STAPM: {limit_total}W {stapm} | SLOW: {limit_slow}W {slow} | FAST: {limit_fast}W {fast}");
         }
 
         public void SetPower(bool launchAsAdmin = false)
@@ -377,16 +382,21 @@ namespace GHelper.Mode
                 Program.acpi.DeviceSet(AsusACPI.PPT_APUA3, limit_total, "PowerLimit A3");
                 Program.acpi.DeviceSet(AsusACPI.PPT_APUA0, limit_slow, "PowerLimit A0");
                 customPower = limit_total;
+                Logger.WriteLine($"setting troleo");
+                SetRyzenPower(true);
             }
             else if (isAMD)
             {
                 if (ProcessHelper.IsUserAdministrator())
                 {
                     SetRyzenPower(true);
+                    Logger.WriteLine($"good outcome");
+
                 }
                 else if (launchAsAdmin)
                 {
                     ProcessHelper.RunAsAdmin("cpu");
+                    Logger.WriteLine($"bad outcome");
                     return;
                 }
             }
@@ -506,12 +516,13 @@ namespace GHelper.Mode
 
         public string SetRyzen(bool launchAsAdmin = false)
         {
+            
             if (!ProcessHelper.IsUserAdministrator())
             {
                 if (launchAsAdmin) ProcessHelper.RunAsAdmin("uv");
                 return string.Empty;
             }
-
+            Logger.WriteLine("ryzen set");
             var smu = GetSmu();
             if (smu == null) return string.Empty;
 
@@ -521,6 +532,7 @@ namespace GHelper.Mode
                 int cpuUV   = AppConfig.GetMode("cpu_uv",   0);
                 int igpuUV  = AppConfig.GetMode("igpu_uv",  0);
                 int cpuTemp = AppConfig.GetMode("cpu_temp");
+                
 
                 if (CpuInfo.IsSupportedUV() && cpuUV >= CpuInfo.MinCPUUV && cpuUV <= CpuInfo.MaxCPUUV)
                 {
@@ -575,18 +587,25 @@ namespace GHelper.Mode
 
         public void ResetRyzen()
         {
+            Logger.WriteLine("ryzen reset");
             if (_cpuUV != 0) SetUV(0);
             if (_igpuUV != 0) SetUViGPU(0);
             if (_cpuTemp != CpuInfo.DefaultTemp) SetCPUTemp(CpuInfo.DefaultTemp, true);
             SetReapplyEnabled(false);
+            
         }
 
         public void AutoRyzen()
         {
-            if (!CpuInfo.IsAMD) return;
+            if (!CpuInfo.IsAMD)
+                return;
+                Logger.WriteLine("vibe check failed");
 
-            if (AppConfig.IsApplyUV()) SetRyzen();
-            else ResetRyzen();
+            if (AppConfig.IsApplyUV()) 
+                SetRyzen();
+            else 
+                ResetRyzen();
+  
         }
 
         public void AutoCPUTemp()
